@@ -1,0 +1,7 @@
+### IDEA ###
+.idea/*
+*.iml
+*/target/*
+*/*.iml
+logs/*
+/*/src/main/resources/rebel.xml
