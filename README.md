@@ -6,7 +6,7 @@
  3. RabbitMq
  4. 微信小程序登录
 
-微信小程序客户端前往这里[niapp-template](https://github.com/RandolphChin/uniapp-template.git) 
+微信小程序客户端前往这里[uniapp-template](https://github.com/RandolphChin/uniapp-template.git) https://github.com/RandolphChin/uniapp-template.git
 
 #### 增加美团Leaf模块用于生成递增序列
 IDGen.get("big_tag名称")
