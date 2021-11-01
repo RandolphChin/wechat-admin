@@ -1,14 +1,19 @@
 package me.zhengjie.modules.quartz.rest;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.modules.quartz.service.QuartzJobServices;
-import me.zhengjie.modules.quartz.service.dto.QuartzConfigDTO;
+import me.zhengjie.modules.quartz.service.dto.QrtzJobInfo;
+import me.zhengjie.utils.PageUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @Slf4j
@@ -23,9 +28,10 @@ public class QuartzJobControllers {
      * @param configDTO
      * @return
      */
-    @RequestMapping("/addJob")
-    public ResponseEntity<Object> addJob(@RequestBody QuartzConfigDTO configDTO) {
-        quartzJobServices.addJob(configDTO.getJobClass(), configDTO.getJobName(), configDTO.getGroupName(), configDTO.getCronExpression(), configDTO.getParam());
+    @PostMapping
+    public ResponseEntity<Object> addJob(@RequestBody QrtzJobInfo configDTO) {
+        Map mp = JSONUtil.parseObj(configDTO.getParam()).toBean(Map.class);
+        quartzJobServices.addJob(configDTO.getJobClass(), configDTO.getJobName(), configDTO.getGroupName(), configDTO.getCronExpression(), mp);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -35,7 +41,7 @@ public class QuartzJobControllers {
      * @return
      */
     @RequestMapping("/pauseJob")
-    public ResponseEntity<Object> pauseJob(@RequestBody QuartzConfigDTO configDTO) {
+    public ResponseEntity<Object> pauseJob(@RequestBody QrtzJobInfo configDTO) {
         quartzJobServices.pauseJob(configDTO.getJobName(), configDTO.getGroupName());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -46,7 +52,7 @@ public class QuartzJobControllers {
      * @return
      */
     @RequestMapping("/resumeJob")
-    public ResponseEntity<Object> resumeJob(@RequestBody QuartzConfigDTO configDTO) {
+    public ResponseEntity<Object> resumeJob(@RequestBody QrtzJobInfo configDTO) {
         quartzJobServices.resumeJob(configDTO.getJobName(), configDTO.getGroupName());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -56,10 +62,10 @@ public class QuartzJobControllers {
      * @param configDTO
      * @return
      */
-    @RequestMapping("/runOnce")
-    public ResponseEntity<Object> runOnce(@RequestBody QuartzConfigDTO configDTO) {
+    @PostMapping("/runOnce")
+    public ResponseEntity<Object> runOnce(@RequestBody QrtzJobInfo configDTO) {
         quartzJobServices.runOnce(configDTO.getJobName(), configDTO.getGroupName());
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -67,9 +73,10 @@ public class QuartzJobControllers {
      * @param configDTO
      * @return
      */
-    @RequestMapping("/updateJob")
-    public ResponseEntity<Object> updateJob(@RequestBody QuartzConfigDTO configDTO) {
-        quartzJobServices.updateJob(configDTO.getJobName(), configDTO.getGroupName(), configDTO.getCronExpression(), configDTO.getParam());
+    @PutMapping
+    public ResponseEntity<Object> updateJob(@RequestBody QrtzJobInfo configDTO) {
+        Map mp = JSONUtil.parseObj(configDTO.getParam()).toBean(Map.class);
+        quartzJobServices.updateJob(configDTO.getJobName(), configDTO.getGroupName(), configDTO.getCronExpression(), mp);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -78,8 +85,8 @@ public class QuartzJobControllers {
      * @param configDTO
      * @return
      */
-    @RequestMapping("/deleteJob")
-    public ResponseEntity<Object> deleteJob(@RequestBody QuartzConfigDTO configDTO) {
+    @DeleteMapping("/deleteJob")
+    public ResponseEntity<Object> deleteJob(@RequestBody QrtzJobInfo configDTO) {
         quartzJobServices.deleteJob(configDTO.getJobName(), configDTO.getGroupName());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -122,5 +129,14 @@ public class QuartzJobControllers {
     public ResponseEntity<Object> shutdownAllJobs() {
         quartzJobServices.shutdownAllJobs();
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @RequestMapping
+    public ResponseEntity<Object> findAllQuartz(Pageable pageable,String jobName){
+        if(ObjectUtil.isNull(jobName)){
+            jobName="";
+        }
+        Page<Map<String,Object>> page = quartzJobServices.getAllJob(pageable,jobName);
+        return new ResponseEntity<>(PageUtil.toPage(page),HttpStatus.OK);
     }
 }

@@ -1,11 +1,14 @@
 package me.zhengjie.modules.quartz.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import me.zhengjie.exception.BadRequestException;
+import me.zhengjie.modules.quartz.repository.QrtzCronTriggersRepository;
 import me.zhengjie.modules.quartz.service.QuartzJobServices;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -28,7 +31,7 @@ public class QuartzJobServicesImpl implements QuartzJobServices {
             CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cronExp);
             //按新的cronExpression表达式构建一个新的trigger
             // scheduleBuilder.withMisfireHandlingInstructionDoNothing() 错误触发时间后不再触发
-            CronTrigger trigger = TriggerBuilder.newTrigger().withIdentity(jobName, groupName).withSchedule(scheduleBuilder.withMisfireHandlingInstructionDoNothing()).build();
+            CronTrigger trigger = TriggerBuilder.newTrigger().withIdentity(jobName, groupName).withDescription(JSONUtil.toJsonStr(param)).withSchedule(scheduleBuilder.withMisfireHandlingInstructionDoNothing()).build();
             //获得JobDataMap，写入数据到 trigger 的 job_data 中
             // 或 可以写入到 jobDetail 的job_data中
             // jobDetail.getJobDataMap().putAll(param);
@@ -79,7 +82,7 @@ public class QuartzJobServicesImpl implements QuartzJobServices {
                 // 表达式调度构建器
                 CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cronExp);
                 // 按新的cronExpression表达式重新构建trigger
-                trigger = trigger.getTriggerBuilder().withIdentity(triggerKey).withSchedule(scheduleBuilder).build();
+                trigger = trigger.getTriggerBuilder().withIdentity(triggerKey).withDescription(JSONUtil.toJsonStr(param)).withSchedule(scheduleBuilder).build();
             }
             //修改map
             if (param != null) {
@@ -144,5 +147,13 @@ public class QuartzJobServicesImpl implements QuartzJobServices {
         } catch (Exception e) {
             log.error("关闭所有的任务失败", e);
         }
+    }
+
+    @Autowired
+    private QrtzCronTriggersRepository triggersRepository;
+    @Override
+    public Page<Map<String,Object>> getAllJob(Pageable pageable,String jobName) {
+       Page<Map<String,Object>> page = triggersRepository.findAllQuartz(jobName,pageable);
+       return page;
     }
 }
